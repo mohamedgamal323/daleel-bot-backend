@@ -122,7 +122,7 @@ It supports multiple business domains (HR, Finance, Procurement, etc.) and a wid
 ## 4. Folder & File Structure
 
 ```plaintext
-codex/
+src/
 │
 ├── app/
 │   ├── api/

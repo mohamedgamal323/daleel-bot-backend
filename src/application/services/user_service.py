@@ -1,12 +1,14 @@
 from typing import List
 from uuid import UUID
+from fastapi import Depends
 from src.domain.persistence.user_repository import UserRepository
 from src.domain.entities.user import User
 from src.domain.enums.role import Role
+from src.domain.persistence.dependencies import get_user_repository
 
 
 class UserService:
-    def __init__(self, repo: UserRepository):
+    def __init__(self, repo: UserRepository = Depends(get_user_repository)):
         self._repo = repo
 
     async def create_user(self, username: str, role: Role) -> User:

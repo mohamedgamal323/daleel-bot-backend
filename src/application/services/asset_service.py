@@ -1,14 +1,22 @@
 from typing import List
 from uuid import UUID
+from fastapi import Depends
 from src.domain.persistence.asset_repository import AssetRepository
 from ..integration.llm_provider import LLMProvider
 from ..vectordb.vector_db import VectorDB
 from src.domain.entities.asset import Asset
 from src.domain.enums.asset_type import AssetType
+from src.domain.persistence.dependencies import get_asset_repository
+from ..integration.dependencies import get_llm_provider, get_vector_db
 
 
 class AssetService:
-    def __init__(self, repo: AssetRepository, llm: LLMProvider | None = None, vector_db: VectorDB | None = None):
+    def __init__(
+        self, 
+        repo: AssetRepository = Depends(get_asset_repository),
+        llm: LLMProvider | None = Depends(get_llm_provider),
+        vector_db: VectorDB | None = Depends(get_vector_db)
+    ):
         self._repo = repo
         self._llm = llm
         self._vector_db = vector_db

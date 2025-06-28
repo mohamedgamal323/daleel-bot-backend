@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from uuid import UUID
 from src.application.services.asset_service import AssetService
-from src.common.dependencies import get_asset_service
 from src.domain.enums.asset_type import AssetType
 
 router = APIRouter(prefix="/assets", tags=["assets"])
@@ -13,7 +12,7 @@ async def create_asset(
     domain_id: UUID,
     asset_type: AssetType,
     content: str | None = None,
-    service: AssetService = Depends(get_asset_service),
+    service: AssetService = Depends(),
 ):
     asset = await service.create_asset(
         name=name, domain_id=domain_id, asset_type=asset_type, content=content
@@ -23,7 +22,7 @@ async def create_asset(
 
 @router.get("/{domain_id}")
 async def list_assets(
-    domain_id: UUID, service: AssetService = Depends(get_asset_service)
+    domain_id: UUID, service: AssetService = Depends()
 ):
     assets = await service.list_assets(domain_id)
     return [{"id": str(a.id), "name": a.name} for a in assets]

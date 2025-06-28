@@ -1,11 +1,13 @@
 from typing import List
 from uuid import UUID
+from fastapi import Depends
 from src.domain.persistence.category_repository import CategoryRepository
 from src.domain.entities.category import Category
+from src.domain.persistence.dependencies import get_category_repository
 
 
 class CategoryService:
-    def __init__(self, repo: CategoryRepository):
+    def __init__(self, repo: CategoryRepository = Depends(get_category_repository)):
         self._repo = repo
 
     async def create_category(self, name: str, domain_id: UUID) -> Category:

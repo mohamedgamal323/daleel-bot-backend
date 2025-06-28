@@ -32,10 +32,10 @@ src/
 │   │   ├── auth_service.py
 │   │   └── query_service.py
 │   ├── integration/               # External service interfaces
-│   │   └── llm_provider.py        # LLM provider contract
+│   │   ├── llm_provider.py        # LLM provider contract
+│   │   └── dependencies.py        # Integration DI providers
 │   ├── vectordb/                  # Vector database interfaces
 │   │   └── vector_db.py           # Vector database contract
-│   └── dependencies.py            # Application DI configuration
 ├── domain/                        # 🎯 Domain Layer (Business Logic)
 │   ├── entities/                  # Business entities
 │   │   ├── user.py
@@ -54,30 +54,28 @@ src/
 │   │   ├── user_repository.py
 │   │   ├── domain_repository.py
 │   │   ├── category_repository.py
-│   │   └── asset_repository.py
+│   │   ├── asset_repository.py
+│   │   └── dependencies.py        # Repository DI providers
 │   └── dependencies.py            # Domain exports
 ├── infrastructure_persistence/    # 💾 Data Access Layer
 │   ├── database/                  # Database connection management
 │   │   └── mongodb.py
 │   ├── mongo_*_repo.py           # MongoDB implementations
-│   ├── memory_*_repo.py          # In-memory implementations
-│   └── dependencies.py           # Repository DI configuration
+│   └── memory_*_repo.py          # In-memory implementations
 ├── infrastructure_integration/    # 🔌 External Services Layer
 │   ├── cohere_llm.py             # Cohere LLM implementation
-│   ├── openai_llm.py             # OpenAI LLM implementation
-│   └── dependencies.py           # Integration DI configuration
+│   └── openai_llm.py             # OpenAI LLM implementation
 ├── infrastructure_vectordb/       # 🔍 Vector Database Layer
 │   ├── memory_vector_db.py       # In-memory vector database
-│   ├── qdrant_vector_db.py       # Qdrant vector database
-│   └── dependencies.py           # VectorDB DI configuration
+│   └── qdrant_vector_db.py       # Qdrant vector database
 ├── common/                        # 🛠️ Shared Utilities
 │   ├── config.py                 # Application configuration
-│   ├── dependencies.py           # Main DI orchestration
 │   ├── logging.py                # Logging configuration
 │   └── utils.py                  # Shared utilities
 ├── main.py                        # 🚀 Application entry point
 ├── asgi.py                        # ASGI server configuration
-└── tests/                         # 🧪 Test suite
+├── tests/                         # 🧪 Test suite
+└── dependencies.py                # 🔌 Optional root-level DI config
 ```
 
 ### Layer Responsibilities
@@ -255,6 +253,97 @@ OPENAI_API_KEY=your_key
 - Self-documenting architecture
 - Logical code organization
 - Clear data flow and dependencies
+
+## 🔌 Enhanced Constructor-Based Dependency Injection
+
+This project implements **true constructor-based dependency injection** using FastAPI's built-in DI system for ultra-clean, testable, and maintainable code.
+
+### Dependency Injection Flow
+
+```
+Controller → Service → Repository/Provider
+     ↓         ↓            ↓
+   Depends   Constructor   Factory
+     ↓         ↓            ↓
+   Auto-resolved in constructor
+```
+
+### How It Works
+
+#### 1. **Services Use Constructor-Based DI**
+Services declare their dependencies directly in the constructor with `Depends()`:
+
+```python
+# application/services/category_service.py
+from fastapi import Depends
+from src.domain.persistence.dependencies import get_category_repository
+
+class CategoryService:
+    def __init__(self, repo: CategoryRepository = Depends(get_category_repository)):
+        self._repo = repo
+```
+
+#### 2. **Controllers Use Simple Depends()**
+Controllers just declare the service dependency with an empty `Depends()`:
+
+```python
+# api/v1/category_controller.py
+@router.post("/")
+async def create_category(
+    name: str,
+    domain_id: UUID,
+    service: CategoryService = Depends()  # FastAPI auto-resolves everything!
+):
+    return await service.create_category(name, domain_id)
+```
+
+#### 3. **Repository Dependencies by Layer**
+Each layer handles its own dependency resolution:
+
+```python
+# domain/persistence/dependencies.py - Repository providers
+def get_category_repository() -> CategoryRepository:
+    settings = get_settings()
+    if settings.USE_MONGODB:
+        return MongoCategoryRepository()
+    else:
+        return MemoryCategoryRepository()
+```
+
+### Benefits
+
+- **🧹 Ultra-Clean**: No manual factory functions in controllers
+- **🔄 Automatic Resolution**: FastAPI resolves entire dependency chains
+- **🧪 Easy Testing**: Direct instantiation with mock dependencies
+- **🏗️ True Clean Architecture**: Each layer manages its own dependencies
+- **📦 Zero Boilerplate**: Services work both in FastAPI and in tests
+- **⚡ Performance**: Dependencies are resolved once per request automatically
+
+### Testing with Constructor DI
+
+```python
+# Direct instantiation for testing - clean and simple
+def test_category_service():
+    repo = MemoryCategoryRepository()
+    service = CategoryService(repo)  # Works perfectly!
+    # Test service logic...
+
+def test_asset_service_with_integrations():
+    repo = MemoryAssetRepository()
+    llm = MockLLMProvider()
+    vector_db = MockVectorDB()
+    service = AssetService(repo, llm=llm, vector_db=vector_db)
+    # Test with all dependencies...
+```
+
+### Dependency Resolution Layers
+
+- **Repository Layer**: `src.domain.persistence.dependencies` - Repository implementations
+- **Integration Layer**: `src.application.integration.dependencies` - External service providers
+- **Services**: Use constructor injection with `Depends()` 
+- **Controllers**: Use simple `Depends()` - everything auto-resolves!
+
+This approach completely eliminates the need for manual service factory functions while maintaining full type safety and testability.
 
 ## 🛣️ Next Steps
 

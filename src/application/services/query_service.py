@@ -1,11 +1,17 @@
 from typing import Iterable, Tuple
+from fastapi import Depends
 from ..integration.llm_provider import LLMProvider
 from ..vectordb.vector_db import VectorDB
 from src.domain.entities.asset import Asset
+from ..integration.dependencies import get_llm_provider, get_vector_db
 
 
 class QueryService:
-    def __init__(self, llm: LLMProvider, vector_db: VectorDB):
+    def __init__(
+        self, 
+        llm: LLMProvider = Depends(get_llm_provider),
+        vector_db: VectorDB = Depends(get_vector_db)
+    ):
         self._llm = llm
         self._vector_db = vector_db
 

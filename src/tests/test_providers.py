@@ -1,16 +1,16 @@
 from uuid import uuid4
-from src.app.infrastructure.providers import (
+from src.common.dependencies import (
     get_llm_provider,
     get_vector_db,
-    CohereLLM,
-    OpenAILLM,
-    QdrantVectorDB,
-    MemoryVectorDB,
 )
-from src.app.infrastructure.repositories.memory_asset_repo import MemoryAssetRepository
-from src.app.application.services.query_service import QueryService
-from src.app.domain.entities.asset import Asset
-from src.app.domain.enums.asset_type import AssetType
+from src.infrastructure_integration.cohere_llm import CohereLLM
+from src.infrastructure_integration.openai_llm import OpenAILLM
+from src.infrastructure_vectordb.qdrant_vector_db import QdrantVectorDB
+from src.infrastructure_vectordb.memory_vector_db import MemoryVectorDB
+from src.infrastructure_persistence.memory_asset_repo import MemoryAssetRepository
+from src.application.services.query_service import QueryService
+from src.domain.entities.asset import Asset
+from src.domain.enums.asset_type import AssetType
 
 
 def test_get_llm_provider():

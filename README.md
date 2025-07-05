@@ -24,6 +24,13 @@ src/
 │       ├── user_controller.py     # User viewing (GET operations)
 │       └── audit_controller.py    # Audit logs
 ├── application/                   # 💼 Application Layer (Business Services)
+│   ├── dtos/                      # Data Transfer Objects
+│   │   ├── auth_dtos.py           # Authentication DTOs
+│   │   ├── category_dtos.py       # Category DTOs
+│   │   ├── domain_dtos.py         # Domain DTOs
+│   │   ├── asset_dtos.py          # Asset DTOs
+│   │   ├── user_dtos.py           # User DTOs
+│   │   └── query_dtos.py          # Query DTOs
 │   ├── services/                  # Business logic services
 │   │   ├── user_service.py
 │   │   ├── domain_service.py
@@ -97,6 +104,66 @@ src/
 - **Request/response** handling and validation
 - **Authentication** and authorization
 - **API versioning** (v1 for public, admin for management)
+
+### 📦 Data Transfer Objects (DTOs)
+
+**DTOs are mandatory** for all API communication between controllers and services. This ensures proper separation of concerns and API contract management.
+
+#### DTO Organization
+DTOs are organized in `src/application/dtos/` using the following patterns:
+
+```
+src/application/dtos/
+├── auth_dtos.py           # Authentication & authorization DTOs
+├── category_dtos.py       # Category management DTOs  
+├── domain_dtos.py         # Domain management DTOs
+├── asset_dtos.py          # Asset management DTOs
+├── user_dtos.py           # User management DTOs
+└── query_dtos.py          # Query processing DTOs
+```
+
+#### DTO Naming Conventions
+- **Request DTOs**: `Create{Entity}RequestDto`, `Update{Entity}RequestDto`
+- **Response DTOs**: `{Entity}ResponseDto`
+- **Special DTOs**: `Login{Operation}Dto`, `{Action}RequestDto`
+
+#### DTO Implementation Rules
+1. **All DTOs must have "Dto" suffix** in their class names
+2. **Use `@dataclass`** for DTO implementation (not Pydantic models)
+3. **Controllers must never define request/response models** - always use DTOs
+4. **Services must accept DTOs** for create/update operations (not individual parameters)
+5. **One file per domain** (e.g., all category-related DTOs in `category_dtos.py`)
+6. **DTOs should only contain data** - no business logic
+
+#### Example DTO Usage
+```python
+# ✅ Correct: Using DTOs end-to-end
+from src.application.dtos.category_dtos import CreateCategoryRequestDto, CategoryResponseDto
+
+# Controller passes DTO to service
+@router.post("/")
+async def create_category(
+    request: CreateCategoryRequestDto,
+    service: CategoryService = Depends(),
+):
+    category = await service.create_category(request)  # DTO passed directly
+    dto = category_to_response_dto(category)
+    return category_response_dto_to_dict(dto)
+
+# Service accepts DTO
+async def create_category(self, dto: CreateCategoryRequestDto) -> Category:
+    category = Category(name=dto.name, domain_id=dto.domain_id)
+    # ... business logic
+    return category
+
+# ❌ Wrong: Defining models in controller
+class CreateCategoryRequest(BaseModel):  # Don't do this!
+    name: str
+
+# ❌ Wrong: Service with individual parameters  
+async def create_category(self, name: str, domain_id: UUID):  # Don't do this!
+    # Should accept DTO instead
+```
 
 #### 💾 Infrastructure Layers
 - **infrastructure_persistence**: Database and repository implementations

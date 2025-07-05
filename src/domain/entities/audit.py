@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 
@@ -14,4 +14,4 @@ class AuditLog:
         if self.id is None:
             self.id = uuid4()
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(timezone.utc)

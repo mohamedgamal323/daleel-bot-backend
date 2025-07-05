@@ -10,11 +10,11 @@ class AssetRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, asset_id: UUID) -> Asset | None:
+    async def get(self, asset_id: UUID, include_deleted: bool = False) -> Asset | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def list(self, domain_id: UUID) -> List[Asset]:
+    async def list(self, domain_id: UUID | None = None, category_id: UUID | None = None, include_deleted: bool = False) -> List[Asset]:
         raise NotImplementedError
 
     @abstractmethod
@@ -22,5 +22,9 @@ class AssetRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, asset_id: UUID) -> None:
+    async def soft_delete(self, asset_id: UUID) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def restore(self, asset_id: UUID) -> None:
         raise NotImplementedError

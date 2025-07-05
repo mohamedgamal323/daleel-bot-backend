@@ -26,6 +26,7 @@ def create_app() -> FastAPI:
     app.include_router(v1.category_controller.router, prefix="/api/v1")
     app.include_router(v1.user_controller.router, prefix="/api/v1")
     app.include_router(v1.query_controller.router, prefix="/api/v1")
+    app.include_router(v1.auth_controller.router, prefix="/api/v1")
 
     app.include_router(admin.user_controller.router, prefix="/admin/v1")
     app.include_router(admin.asset_controller.router, prefix="/admin/v1")

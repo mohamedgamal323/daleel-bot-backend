@@ -24,7 +24,7 @@ def test_get_vector_db():
     # Test the direct implementations
     repo = MemoryAssetRepository()
     assert isinstance(MemoryVectorDB(repo), MemoryVectorDB)
-    assert isinstance(QdrantVectorDB(repo), QdrantVectorDB)
+    assert isinstance(QdrantVectorDB(asset_repo=repo), QdrantVectorDB)
 
 
 @pytest.mark.asyncio

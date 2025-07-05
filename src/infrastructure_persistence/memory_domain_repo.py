@@ -11,26 +11,38 @@ class MemoryDomainRepository(DomainRepository):
     async def add(self, domain: Domain) -> None:
         self.domains.append(domain)
 
-    async def get(self, domain_id: UUID) -> Domain | None:
+    async def get(self, domain_id: UUID, include_deleted: bool = False) -> Domain | None:
         for d in self.domains:
             if d.id == domain_id:
-                return d
+                if include_deleted or not d.is_deleted():
+                    return d
         return None
 
-    async def get_by_name(self, name: str) -> Domain | None:
+    async def get_by_name(self, name: str, include_deleted: bool = False) -> Domain | None:
         for d in self.domains:
             if d.name == name:
-                return d
+                if include_deleted or not d.is_deleted():
+                    return d
         return None
 
-    async def list(self) -> List[Domain]:
-        return list(self.domains)
+    async def list(self, include_deleted: bool = False) -> List[Domain]:
+        if include_deleted:
+            return list(self.domains)
+        return [d for d in self.domains if not d.is_deleted()]
 
     async def update(self, domain: Domain) -> None:
         for i, d in enumerate(self.domains):
             if d.id == domain.id:
+                domain.update()
                 self.domains[i] = domain
                 break
 
-    async def delete(self, domain_id: UUID) -> None:
-        self.domains = [d for d in self.domains if d.id != domain_id]
+    async def soft_delete(self, domain_id: UUID) -> None:
+        domain = await self.get(domain_id, include_deleted=True)
+        if domain:
+            domain.soft_delete()
+
+    async def restore(self, domain_id: UUID) -> None:
+        domain = await self.get(domain_id, include_deleted=True)
+        if domain:
+            domain.restore()

@@ -10,19 +10,19 @@ class CategoryRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, category_id: UUID) -> Category | None:
+    async def get(self, category_id: UUID, include_deleted: bool = False) -> Category | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_name(self, name: str, domain_id: UUID) -> Category | None:
+    async def get_by_name(self, name: str, domain_id: UUID, include_deleted: bool = False) -> Category | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def list(self, domain_id: UUID) -> List[Category]:
+    async def list(self, domain_id: UUID, include_deleted: bool = False) -> List[Category]:
         raise NotImplementedError
 
     @abstractmethod
-    async def list_all(self) -> List[Category]:
+    async def list_all(self, include_deleted: bool = False) -> List[Category]:
         raise NotImplementedError
 
     @abstractmethod
@@ -30,5 +30,9 @@ class CategoryRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, category_id: UUID) -> None:
+    async def soft_delete(self, category_id: UUID) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def restore(self, category_id: UUID) -> None:
         raise NotImplementedError

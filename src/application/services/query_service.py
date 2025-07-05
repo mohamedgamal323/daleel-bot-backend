@@ -4,6 +4,7 @@ from ..integration.llm_provider import LLMProvider
 from ..vectordb.vector_db import VectorDB
 from src.domain.entities.asset import Asset
 from ..integration.dependencies import get_llm_provider, get_vector_db
+from src.application.dtos.query_dtos import QueryRequestDto
 
 
 class QueryService:
@@ -15,8 +16,8 @@ class QueryService:
         self._llm = llm
         self._vector_db = vector_db
 
-    def query(self, domain_id, text: str) -> Tuple[str, Iterable[Asset]]:
-        embedding = self._llm.embed(text)
-        assets = self._vector_db.search(domain_id, embedding)
-        answer = self._llm.complete(text)
+    def query(self, dto: QueryRequestDto) -> Tuple[str, Iterable[Asset]]:
+        embedding = self._llm.embed(dto.text)
+        assets = self._vector_db.search(dto.domain_id, embedding)
+        answer = self._llm.complete(dto.text)
         return answer, assets

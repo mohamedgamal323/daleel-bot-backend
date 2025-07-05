@@ -10,15 +10,15 @@ class DomainRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, domain_id: UUID) -> Domain | None:
+    async def get(self, domain_id: UUID, include_deleted: bool = False) -> Domain | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_name(self, name: str) -> Domain | None:
+    async def get_by_name(self, name: str, include_deleted: bool = False) -> Domain | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def list(self) -> List[Domain]:
+    async def list(self, include_deleted: bool = False) -> List[Domain]:
         raise NotImplementedError
 
     @abstractmethod
@@ -26,5 +26,9 @@ class DomainRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, domain_id: UUID) -> None:
+    async def soft_delete(self, domain_id: UUID) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def restore(self, domain_id: UUID) -> None:
         raise NotImplementedError

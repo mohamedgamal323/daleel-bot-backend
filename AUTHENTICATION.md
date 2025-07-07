@@ -21,12 +21,7 @@ The system provides JWT-based authentication with role-based access control (RBA
    - Password hashing and verification
    - Token expiration handling
 
-3. **Auth Dependencies** (`src/application/auth/dependencies.py`)
-   - FastAPI dependency injection for authentication
-   - Role and permission checking
-   - Current user extraction
-
-4. **Auth Controller** (`src/api/v1/auth_controller.py`)
+3. **Auth Controller** (`src/api/v1/auth_controller.py`)
    - REST API endpoints for authentication
    - User registration, login, logout
    - Password management endpoints
@@ -415,33 +410,73 @@ python -m pytest src/tests/test_auth_integration.py -v
 ### Creating a Protected Endpoint
 
 ```python
-from fastapi import APIRouter, Depends
-from src.application.auth.dependencies import require_user_write
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from src.application.services.auth_service import AuthService
+from src.domain.entities.user import User
+from src.domain.enums.role import Role
+from src.domain.enums.permission import Permission, get_role_permissions
 
 router = APIRouter()
+security = HTTPBearer()
+
+async def extract_current_user_from_token(
+    credentials: HTTPAuthorizationCredentials,
+    auth_service: AuthService
+) -> User:
+    """Helper function to extract current user from JWT token"""
+    token = credentials.credentials
+    user = await auth_service.get_current_user_from_token(token)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return user
 
 @router.post("/protected-resource")
 async def create_resource(
-    current_user: User = Depends(require_user_write),
-    # other dependencies
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    auth_service: AuthService = Depends()
 ):
-    # Only users with CREATE_USER permission can access this
+    # Extract and validate user
+    current_user = await extract_current_user_from_token(credentials, auth_service)
+    
+    # Check specific permission
+    user_permissions = get_role_permissions(current_user.role)
+    if Permission.CREATE_USER not in user_permissions:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions"
+        )
+    
     return {"message": "Resource created"}
 ```
 
 ### Multiple Permission Requirements
 
 ```python
-from src.application.auth.dependencies import require_permissions
-from src.domain.enums.permission import Permission
-
 @router.post("/complex-operation")
 async def complex_operation(
-    current_user: User = Depends(
-        require_permissions({Permission.CREATE_ASSET, Permission.UPDATE_DOMAIN})
-    ),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
-    # Requires both CREATE_ASSET and UPDATE_DOMAIN permissions
+    # Extract and validate user
+    current_user = await extract_current_user_from_token(credentials, auth_service)
+    
+    # Check multiple permissions
+    user_permissions = get_role_permissions(current_user.role)
+    required_permissions = {Permission.CREATE_ASSET, Permission.UPDATE_DOMAIN}
+    
+    if not required_permissions.issubset(user_permissions):
+        missing_permissions = required_permissions - user_permissions
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Insufficient permissions. Missing: {[p.value for p in missing_permissions]}"
+        )
+    
     return {"message": "Complex operation completed"}
 ```
 

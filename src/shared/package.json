@@ -1,0 +1,14 @@
+{
+  "name": "@daleel-bot/shared",
+  "version": "1.0.0",
+  "description": "Shared types for Daleel Bot",
+  "main": "types.ts",
+  "types": "types.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
